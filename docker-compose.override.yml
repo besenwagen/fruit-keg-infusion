@@ -1,0 +1,7 @@
+version: "3.6"
+services:
+  node:
+    environment:
+      - PROJECT=e2e-template
+    volumes:
+      - ~/Workspace/Projects/fruit-keg-infusion:/home/node/workspace/public

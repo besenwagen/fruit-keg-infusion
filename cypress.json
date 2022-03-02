@@ -1,0 +1,6 @@
+{
+	"baseUrl": "https://e2e-cypress-axe.netlify.app",
+	"fixturesFolder": false,
+	"screenshotOnRunFailure": false,
+	"video": false
+}

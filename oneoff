@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+DIR="${PWD}"
+FILE=$(basename "${0}")
+
+rm -rf .git* docker-compose.override.yml
+
+if [[ $(git rev-parse --is-inside-work-tree) == "true" ]]; then
+  cd $(git rev-parse --show-toplevel)
+  PREFIX=${DIR//"${PWD}/"/}
+  "./${PREFIX}/WCAG" install "${PREFIX}/"
+  cd "${PREFIX}"
+else
+  git init
+  git add .
+  git reset -- "${FILE}"
+  git commit -am "Initial commit"
+  ./WCAG install
+fi
+
+rm "${FILE}"

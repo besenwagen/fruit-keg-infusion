@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+########################################################################
+
+DEVELOPMENT_URL=https://localhost:3443
+
+########################################################################
+
+subtree() {
+  local command=${1}
+  local path=${2}
+  git subtree ${command} \
+    --prefix "${path}vendor" \
+    git@github.com:besenwagen/no-way-keg.git \
+    main --squash
+}
+
+compose() {
+  docker-compose \
+    --project-directory . \
+    -f vendor/compose/base.yml \
+    "${@}"
+}
+
+run() {
+  local environment=${1}
+  local browser=${2:-electron}
+  compose \
+    -f vendor/compose/"${environment}".yml \
+    run --entrypoint cypress \
+    cypress \
+    run --browser ${browser}
+}
+
+if [ $# -eq 0 ]; then
+  # default: use the container with a local development server
+  CYPRESS_BASE_URL=${DEVELOPMENT} run development
+else
+  case "${1}" in
+  # use the container with a staging server
+  staging)
+    run staging ${2}
+    ;;
+  # use the container with a staging server that has HTTP Basic Auth
+  auth)
+    read -pr "Username: " username
+    read -pr "Password: " password
+    CYPRESS_USERNAME="${username}" \
+      CYPRESS_PASSWORD="${password}" \
+      run staging ${2}
+    ;;
+  # use the test runner app on macOS
+  # Cypress.app must be in ~/Applications or /Applications
+  mac)
+    CYPRESS_BASE_URL=${DEVELOPMENT} open -a Cypress
+    ;;
+  # use the test runner app on Linux
+  # needs the Cypress app and a user defined cypress command
+  tux)
+    CYPRESS_BASE_URL=${DEVELOPMENT} cypress
+    ;;
+  cypress)
+    compose \
+      run --entrypoint cypress \
+      cypress info
+    ;;
+  # install the vendor dependency manually
+  install)
+    subtree add ${2}
+    ;;
+  # update the vendor dependency
+  update)
+    subtree pull
+    ;;
+  *)
+    echo "Bad argument: ${1}"
+    exit 1
+    ;;
+  esac
+fi
